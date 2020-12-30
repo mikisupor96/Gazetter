@@ -4,31 +4,18 @@ $(document).ready(() => {
 });
 
 // Map function
-const createMap = () => {
-	const mapOptions = {
-		center: [51.5, -0.09],
-		zoom: 13,
-	}
+const createMap = async () => {
+	let map = L.map('mapid').setView([51.505, -0.09], 13);
 
 	const tileOptions = {
-		maxZoom: 19,
+		maxZoom: 5,
 		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 	}
-
-	var latlngs = [[37, -109.05],[41, -109.03],[41, -102.05],[37, -102.04]];
-
-	let map = L.map('mapid', mapOptions);
-	let OpenStreetMap_Mapnik = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', tileOptions).addTo(map);
-	
-	var polygon = L.polygon(latlngs, {color: 'red'}).addTo(map);
-	// zoom the map to the polygon
-	map.fitBounds(polygon.getBounds());
+	let OpenStreetMap_Mapnik = await L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', tileOptions).addTo(map);
 }
 
-// AJAX CALLS
-
+// Update countries list
 const getCountry = $.ajax("libs/php/getCountry.php")
-
 
 getCountry
 	.done(result => {
@@ -42,54 +29,23 @@ getCountry
 		console.log(err)
 	})
 
+// DOM update
+$("#search").click(() => {
+	console.log($("#countryList").find(":selected").text());
 
-// // GET COUNTRY BORDERS
+	// // GET COUNTRY BORDERS
+	$.ajax({
+		url: "libs/php/getCountryBorders.php",
+		type: 'POST',
+		dataType: 'json',
+		data: {
+			country: $('select').val(),
+		},
+		success: function(result) {
+			// ADD COUNTRY BOUDS
+			console.log(result["data"]);
+		},
 
-// $( "#search" ).click(function() {
-// 	$.ajax({
-// 		url: "libs/php/getCountryBorders.php",
-// 		type: 'POST',
-// 		dataType: 'json',
-// 		data: {
-// 			country: $('select').val(),
-// 		},
-// 		success: function(result) {
-// 			// ADD COUNTRY BOUDS
-// 			countryDelimiters = result["data"];
-// 			var countryName = $('#countryList').find(":selected").text();
-// 			var polygon = L.polygon(countryDelimiters).addTo(mymap).bindPopup(`<b>${countryName}</b>`);
-// 			var countryMarker = L.marker(countryDelimiters[0]).addTo(mymap);
-
-// 			// ADD WIKI INFO
-// 			$.ajax({
-// 				url: "libs/php/getWikiInfo.php",
-// 				type: 'POST',
-// 				dataType: 'json',
-// 				data: {
-// 					countryName: countryName,
-// 				},
-// 				success: function(result) {
-// 					if (result.status.name == "ok") {
-// 						console.log(result);
-// 					}	
-// 				},
-
-// 				error: function(jqXHR, textStatus, errorThrown) {}
-// 			})
-
-// 			// ADD NEWS ARTICLES
-
-// 			// ADD IMAGES
-
-// 			// ADD COVID DATA 
-
-// 			// ADD CURENCY PERFORMANCE
-
-// 			// ADD CLIMATE TRENDS
-
-// 			// ETC
-// 		},
-
-// 		error: function(jqXHR, textStatus, errorThrown) {}
-// 	})
-// });
+		error: function(err) {console.log(err)}
+	})
+})
