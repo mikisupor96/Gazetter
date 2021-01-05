@@ -1,23 +1,22 @@
-<<<<<<< HEAD
-// Create map and get user location
+//=============================CREATE MAP ON FILE LOAD=============================//
 $(document).ready(() => {
 	createMap()
 	updateCountries()
 });
-
-// Map 
-let map = L.map(`mapid`).setView([51.505, -0.09], 9);
+//=============================MAP CREATION=============================//
+let map = L.map(`mapid`).setView([51.505, -0.09], 4);
 
 const createMap = async () => {
-	const tileOptions = {
-		maxZoom: 15,
-		attribution: `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors`
-	}
-	let OpenStreetMap_Mapnik = await L.tileLayer(`https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`, tileOptions).addTo(map);
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		id: 'mapbox/light-v9',
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+		tileSize: 512,
+		zoomOffset: -1
+	}).addTo(map);
 }
-
-// Update countries list
+//=============================ADD COUNTRIES=============================//
 const updateCountries = () => {
+	// ajax call to get countries from json file
 	const getCountry = $.ajax("libs/php/getCountry.php")
 
 	getCountry
@@ -32,9 +31,23 @@ const updateCountries = () => {
 			console.log(err)
 		})
 }
-
-// DOM update
+//=============================DOM UPDATE=============================//
 $("#search").click(() => {
+	// ajax call to get border feature from json file
+	$.ajax({
+		url: "libs/php/getCountryBorders.php",
+		type: `POST`,
+		dataType: `json`,
+		data: {
+			countryCode: $("#countryList").val()
+		},
+		success: async result => {
+			addBorders(result.data);
+		},
+
+		error: err => {return err}
+	})
+	// ajax call to get all api call information
 	$.ajax({
 		url: "libs/php/getInfo.php",
 		type: `POST`,
@@ -44,146 +57,131 @@ $("#search").click(() => {
 			countryCode: $("#countryList").val()
 		},
 		success: async result => {
-			await result;
 			console.log(result);
+			infoPanel({
+				country: $("#countryList").find(":selected").text(),
+				news_1: {
+					content: result["news"]["article_1"]["content"],
+					title: result["news"]["article_1"]["title"],
+				},
+				news_2: {
+					content: result["news"]["article_2"]["content"],
+					title: result["news"]["article_2"]["title"],
+				},
+				weather_description: result["weather"]["description"],
+				weather_humidity: result["weather"]["humidity"],
+				weather_rain: result["weather"]["rain"],
+				weather_temp: result["weather"]["temp"],
+				wikipediaInfo: result["wikiExtract"],
+			})
 		},
 
 		error: err => {return err}
 	})
 })
+//=============================INFO MAP PANEL=============================//
+function infoPanel(apiInfo){
+	let {country, news_1, news_2, weather_description, weather_humidity, weather_rain, weather_temp, wikipediaInfo} = apiInfo;
+	
+	newWikiInfo = wikipediaInfo.split(".").splice(0,5).join(" ");
+	newArticle1 = news_1["content"].split(".").splice(0,5).join(" ");
+	newArticle2 = news_2["content"].split(".").splice(0,5).join(" ");
 
-const createBounds = (feature) => {
-	// Map styles
-	const getColor = (d) => {
-		return d > 1000 ? `#800026` :
-			d > 500  ? `#BD0026` :
-			d > 200  ? `#E31A1C` :
-			d > 100  ? `#FC4E2A` :
-			d > 50   ? `#FD8D3C` :
-			d > 20   ? `#FEB24C` :
-			d > 10   ? `#FED976` :
-						`#FFEDA0`;
+	var info = L.control();
+
+	info.onAdd = function(){
+		this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+		this.update();
+		return this._div;
+	};
+
+	// method that we will use to update the control based on feature properties passed
+	info.update = function(props) {
+		this._div.innerHTML = `
+			<div class="card" style="width: 25rem;">
+				<h5 class="card-header">${country}</h5>
+				<div class="card-body">
+					<h5 class="card-subtitle mb-2 text-muted">Temperature: ${weather_temp}°C | Rain: ${weather_rain || "none"} | Humidity: ${weather_humidity}%rh | ${weather_description}</h5>
+					<p class="card-text">${newWikiInfo}</p>
+					<ul class="list-group list-group-flush">
+						<li class="list-group-item">
+							<h5>${news_1.title}</h5>
+							<p class="card-text">${newArticle1}</p>
+						</li>
+						<li class="list-group-item">
+							<h5>${news_2.title}</h5>
+							<p class="card-text">${newArticle2}</p>
+						</li>
+				  	</ul>
+				</div>
+			</div>
+		`
+	};
+
+	info.addTo(map);
+}
+//=============================ADD MAP BORDERS=============================//
+function addBorders(data){
+	L.geoJson(data, {style: style}).addTo(map);
+
+	var geojson = L.geoJson(data, {
+		style: style,
+		onEachFeature: onEachFeature
+	}).addTo(map);
+
+	function getColor(d) {
+		return d > 1000 ? '#800026' :
+			   d > 500  ? '#BD0026' :
+			   d > 200  ? '#E31A1C' :
+			   d > 100  ? '#FC4E2A' :
+			   d > 50   ? '#FD8D3C' :
+			   d > 20   ? '#FEB24C' :
+			   d > 10   ? '#FED976' :
+						  '#FFEDA0';
 	}
-	// highlight code
-	const highlightFeature = (e) => {
-		let layer = e.target;
 
+	function style(feature) {
+		return {
+			fillColor: getColor(feature.properties.density), // change this
+			weight: 2,
+			opacity: 1,
+			color: 'white',
+			fillOpacity: 0.4
+		};
+	}
+
+	function highlightFeature(e) {
+		var layer = e.target;
+	
 		layer.setStyle({
-			weight: 5,
-			color: `#F2F2F2`,
-			dashArray: ``,
-			fillOpacity: 0.2
+			weight: 0.5,
+			color: '#D3D3D3',
+			fillOpacity: 0.3
 		});
-
+	
 		if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
 			layer.bringToFront();
 		}
 	}
 
-	const style = el => {
-		return {
-			fillColor: getColor(el.properties.density),
-			weight: 2,
-			opacity: 1,
-			color: `C3C3C3`,
-			dashArray: `3`,
-			fillOpacity: 0.2
-		};
-	}
-
-	const resetHighlight = (e) => {
+	function resetHighlight(e) {
 		geojson.resetStyle(e.target);
 	}
 
-	const zoomToFeature = (e) => {
+	function zoomToFeature(e) {
 		map.fitBounds(e.target.getBounds());
 	}
-	// adding listeners
-	const onEachFeature = (feature, layer) => {
+
+	function onEachFeature(feature, layer) {
 		layer.on({
 			mouseover: highlightFeature,
 			mouseout: resetHighlight,
 			click: zoomToFeature
 		});
 	}
-	
-	geojson = L.geoJson(feature, {
-		style: style,
-		onEachFeature: onEachFeature
-	}).addTo(map);
+
 }
 
-//=============================INFO MAP PANEL=============================//
-function infoPanel(apiInfo){
-	const info = L.control();
 
-	info.onAdd = function (map) {
-		this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-		this.update(apiInfo);
-		return this._div;
-	};
-	
-	// method that we will use to update the control based on feature properties passed
-	info.update = function (name, temperature, sunrise) {
-		// this._div.innerHTML = '<h4>US Population Density</h4>' +  (props ?
-		// 	'<b>' + props.name + '</b><br />' + props.density + ' people / mi<sup>2</sup>'
-		// 	: 'Hover over a state');
-		this._div.innerHTML = `Currently in ${name} there are ${temperature}°C.The sun will rise at ${secondsToHms(sunrise)}`;
-	};
-	
-	info.addTo(map);
-}
 
-=======
-// Create map and get user location
-$(document).ready(() => {
-	createMap()
-});
 
-// Map function
-const createMap = async () => {
-	let map = L.map('mapid').setView([51.505, -0.09], 13);
-
-	const tileOptions = {
-		maxZoom: 5,
-		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-	}
-	let OpenStreetMap_Mapnik = await L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', tileOptions).addTo(map);
-}
-
-// Update countries list
-const getCountry = $.ajax("libs/php/getCountry.php")
-
-getCountry
-	.done(result => {
-		if (result.status.name == "ok") {
-			result["data"].forEach(el => {
-				$('#countryList').append(new Option(el["name"], el["iso_a2"]));
-			});
-		}
-	})
-	.catch(err => {
-		console.log(err)
-	})
-
-// DOM update
-$("#search").click(() => {
-	console.log($("#countryList").find(":selected").text());
-
-	// // GET COUNTRY BORDERS
-	$.ajax({
-		url: "libs/php/getCountryBorders.php",
-		type: 'POST',
-		dataType: 'json',
-		data: {
-			country: $('select').val(),
-		},
-		success: function(result) {
-			// ADD COUNTRY BOUDS
-			console.log(result["data"]);
-		},
-
-		error: function(err) {console.log(err)}
-	})
-})
->>>>>>> 6edbf67610864c95d67563aa57b848210c313530

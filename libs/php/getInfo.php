@@ -1,7 +1,13 @@
 <?php
+    ini_set('display_errors', '1');
+    ini_set('display_startup_errors', '1');
+    error_reporting(E_ALL);
 
+    $weatherKey = "";
+    $newsKey = "";
     
     function getResponseByUrlsMulti($urls){
+        $executionStartTime = microtime(true) / 1000;
         //================================================================CURL OPTIONS================================================================//
         $curlOptions = [
             CURLOPT_RETURNTRANSFER => true,
@@ -48,31 +54,43 @@
         //================================================================GET RESULTS================================================================//
         $result = [];
         foreach ($chArray as $key => $ch) {
-            $result[$key] = json_decode(curl_multi_getcontent($ch));
+            $result[$key] = json_decode(curl_multi_getcontent($ch), true);
             $result["status"]["code"] = "200";
             $result["status"]["name"] = "ok";
             $result["status"]["description"] = "success";
             $result["status"]["executedIn"] = intval((microtime(true) - $executionStartTime) * 1000) . " ms";
-
-            // $result["weatherInfo"] = $result[1]["list"][1]["temp"];
         }
 
-        return $result;
+        $output["weather"]["temp"] = $result[1]["list"][0]["main"]["temp"];
+        $output["weather"]["humidity"] = $result[1]["list"][0]["main"]["humidity"];
+        $output["weather"]["wind"]["speed"] = $result[1]["list"][0]["wind"]["speed"];
+        $output["weather"]["rain"] = $result[1]["list"][0]["rain"];
+        $output["weather"]["description"] = $result[1]["list"][0]["weather"][0]["description"];
+
+        $output["news"]["article_1"]["title"] = $result[2]["articles"][0]["title"];
+        $output["news"]["article_1"]["content"] = $result[2]["articles"][0]["content"];
+        $output["news"]["article_2"]["title"] = $result[2]["articles"][2]["title"];
+        $output["news"]["article_2"]["content"] = $result[2]["articles"][2]["content"];
+
+        foreach($result[0]["query"]["pages"] as $val){
+            $output["wikiExtract"] = $val["extract"];
+        }
+
+        // $output["data"] = $result;
+
+        return $output;
     }
 
     $output = getResponseByUrlsMulti([
         "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles=" . $_REQUEST["country"],
         "api.openweathermap.org/data/2.5/find?q=London&units=metric&appid=" . $weatherKey,
-        "https://newsapi.org/v2/top-headlines?country=" . $_REQUEST["countryCode"] . "&apiKey=" . $newsKey
+        "https://newsapi.org/v2/top-headlines?country=" . $_REQUEST["countryCode"] . "&apiKey=" . $newsKey,
     ]);
+    
 
     header("Content-Type: application/json; charset=UTF-8");
 
-    try {
-        echo json_encode($output);
-    } catch (Throwable $e) {
-        echo "Captured Throwable: " . $e->getMessage() . PHP_EOL;
-    }
+    echo json_encode($output);
 ?>
 
 

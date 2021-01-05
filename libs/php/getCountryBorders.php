@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?php
 	ini_set('display_errors', 'On');
 	error_reporting(E_ALL);
@@ -6,7 +5,7 @@
 	$executionStartTime = microtime(true) / 1000;
 
 	$url= "http://localhost/libs/json/countryBorders.geo.json";
-	$countryCode= $_REQUEST["country"];
+	$countryCode = $_REQUEST["countryCode"];
 	
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -23,7 +22,6 @@
 	$output['status']['name'] = "ok";
 	$output['status']['description'] = "mission saved";
 	$output['status']['returnedIn'] = microtime(true) / 1000 - $executionStartTime . " ms";
-	// return array with all country borders in json file
 	foreach ($decode["features"] as $value) {
 		if($value["properties"]["iso_a2"] === $countryCode){
 			$output['data'] = $value;
@@ -34,41 +32,3 @@
 
 	echo json_encode($output); 
 ?>
-=======
-<?php
-	ini_set('display_errors', 'On');
-	error_reporting(E_ALL);
-
-	$executionStartTime = microtime(true) / 1000;
-
-	$url= "http://localhost/libs/json/countryBorders.geo.json";
-	$countryCode= $_REQUEST["country"];
-	
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_URL,$url);
-
-	$result=curl_exec($ch);
-
-	curl_close($ch);
-
-	$decode = json_decode($result,true);
-
-	$output['status']['code'] = "200";
-	$output['status']['name'] = "ok";
-	$output['status']['description'] = "mission saved";
-	$output['status']['returnedIn'] = microtime(true) / 1000 - $executionStartTime . " ms";
-
-	// return array with all country borders in json file
-	foreach ($decode["features"] as $value) {
-		if($value["properties"]["iso_a2"] == $countryCode){
-			$output['data'] = $value["geometry"]["coordinates"][0];
-		}
-	}
-    
-    header('Content-Type: application/json; charset=UTF-8');
-
-	echo json_encode($output); 
-?>
->>>>>>> 6edbf67610864c95d67563aa57b848210c313530
