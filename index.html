@@ -2,35 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Mapy</title>
+    <title>Mapyo</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <link rel="apple-touch-icon" sizes="180x180" href="extra/Icon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="extra/Icon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="extra/Icon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="vendors/favicon/apple-touch-icon.png"> 
+    <link rel="icon" type="image/png" sizes="32x32" href="vendors/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="vendors/favicon/favicon-16x16.png">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <link rel="stylesheet" href="./source/src/L.Control.Sidebar.css" />
-    <link rel="stylesheet" href="./source/css/style.css">
+    <link rel="stylesheet" href="vendors/bootstrap.min.css">
+    <link rel="stylesheet" href="vendors/leaflet/leaflet.css"/>
+    <link rel="stylesheet" type="text/css" href="./source/src/L.Control.Sidebar.css" />
+    <link rel="stylesheet" type="text/css" href="./source/css/style.css">
 
 </head>
-<body>
+<body class="preloader">
+    <!-- CONVER INFO -->
+    <!-- <div class="cover">
+      <h1>Some info about the site</h1>
+      <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Labore neque officia corporis aspernatur quam sunt accusantium dolore, ducimus earum? Ex sit adipisci eveniet itaque? Numquam velit excepturi molestiae distinctio vero.</p>
+      <button>Let`s Go!</button>
+    </div> -->
+    <!-- MAIN CONTENT -->
     <div id="sidebar">
       <select class="form-select mt-5" aria-label="Default select example" id="countryList">
         <option>Select country</option>
       </select>
-      <div class="accordion" id="accordionExample">
+      <div class="accordion" id="container">
         <div class="accordion-item mt-2">
           <h2 class="accordion-header" id="headingOne">
             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
               About
             </button>
           </h2>
-          <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+          <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#container">
             <div class="accordion-body">
-              <p id="about">Please select country</p>
+              <p id="about"></p>
             </div>
           </div>
         </div>
@@ -40,7 +47,7 @@
               Weather
             </button>
           </h2>
-          <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+          <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#container">
             <div class="accordion-body">
               <p id="weather">Please select country</p>
             </div>
@@ -52,7 +59,7 @@
               News
             </button>
           </h2>
-          <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+          <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#container">
             <div class="accordion-body">
               <p id="news">Please select country</p>
             </div>
@@ -63,11 +70,10 @@
 
     <div id="map"></div>
 
-    <script src="https://code.jquery.com/jquery-2.1.3.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="vendors/jquery.js"></script>
+    <script src="vendors/bootstrap.min.js"></script>
+    <script src="vendors/leaflet/leaflet.js"></script>
     <script src="./source/src/L.Control.Sidebar.js"></script>
-    <script src="./source/src/L.Control.Button.js"></script>
     <script src="./source/js/script.js"></script>
 </body>
 </html>
