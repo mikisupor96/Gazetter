@@ -64,3 +64,20 @@ body,
   position: absolute;
   z-index: 1000;
 }
+
+.exitBtn {
+  float: right;
+}
+
+.infoBar {
+  background: rgba(0, 0, 0, 0.5);
+  font-size: 1.3em;
+  width: 500px;
+  color: white;
+}
+
+@media only screen and (max-width: 600px) {
+  .infoBar {
+    font-size: 1em;
+  }
+}

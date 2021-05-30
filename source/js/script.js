@@ -96,7 +96,8 @@ function getUserLocation(lat, lon) {
       lon: lon,
     },
     success: (result) => {
-      displayInfo(result["name"], result["isoCode"]);
+      $(".option").html(result["name"]);
+      getInfo(result["isoCode"], result["name"]);
       getCountryBorders(result["isoCode"]);
     },
     error: (xhr) => {
@@ -112,11 +113,15 @@ function createMap() {
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map);
+  map.setView([51, 0.1], 6);
+  sidebar.show();
   map.on("click", function () {
+    $(".infoBar").hide();
+    sidebar.toggle();
+  });
+  $(".exitBtn").on("click", () => {
     sidebar.hide();
   });
-  map.setView([51, 0.1], 6);
-  sidebar.toggle();
 }
 
 //=============================SEND INFORMATION=============================//
@@ -139,16 +144,25 @@ function getCountryBorders(isoCode) {
   });
 }
 
+function getInfo(isoCode, country) {
+  getCitiesForCountry(isoCode);
+  getLiveFeed(isoCode);
+  getCountryBorders(isoCode);
+  displayInfo(country, isoCode);
+  getCoronaInfo(isoCode);
+  getMoviesInfo(isoCode);
+}
+
 //=============================ON CHANGE EVENT=============================//
+let tries = 0;
 $("#countryList").change(function () {
-  if (this.value) {
-    $("#news").html("");
+  if (this.value && tries < 3) {
     const country = $("#countryList").find(":selected").text();
     const isoCode = this.value;
-    // getCitiesForCountry(isoCode);
-    getLiveFeed(isoCode);
-    // getCountryBorders(isoCode);
-    // displayInfo(country, isoCode);
+    getInfo(isoCode, country);
+    tries++;
+  } else {
+    alert("You have run out of tries! Thank you for trying my app :)");
   }
 });
 //=============================ADD MAP BORDERS=============================//
@@ -190,7 +204,6 @@ function addBorders(data) {
 
   function zoomToFeature(e) {
     map.fitBounds(e.target.getBounds());
-    sidebar.toggle();
   }
 
   function onEachFeature(feature, layer) {
@@ -214,15 +227,81 @@ function getLiveFeed(isoCode) {
       isoCode: isoCode,
     },
     success: (result) => {
-      result["webcams"].forEach((el) => {
-        let html = `
-          <p>${el["name"]}</p>
-          <a name="windy-webcam-timelapse-player" data-id="${el["id"]}" data-play="day" href="https://windy.com/webcams/${el["id"]}" target="_blank"></a>
-          <script type="text/javascript" src="https://webcams.windy.com/webcams/public/embed/script/player.js"></script>
-        `;
-        addIcon(el["coords"], html, false);
-      });
-      console.log(result);
+      try {
+        result["webcams"].forEach((el) => {
+          let html = `
+            <a name="windy-webcam-timelapse-player" data-id="${el["id"]}" data-play="day" href="https://windy.com/webcams/${el["id"]}" target="_blank">${el["name"]}</a>
+            <script type="text/javascript" src="https://webcams.windy.com/webcams/public/embed/script/player.js"></script>
+          `;
+          addIcon(el["coords"], html, false);
+        });
+      } catch (e) {
+        console.log(`No Webcam Data:\n${e}`);
+      }
+    },
+    error: (xhr) => {
+      console.log(xhr["responseText"]);
+    },
+  });
+}
+
+//=============================ADD CORONAVIRUS INFO=============================//
+function getCoronaInfo(isoCode) {
+  $("#coronavirus").html(`Getting your data...`);
+  $.ajax({
+    url: "source/php/getCoronaInfo.php",
+    type: `GET`,
+    dataType: `json`,
+    data: {
+      isoCode: isoCode,
+    },
+    success: (result) => {
+      $("#coronavirus").html(`
+        <h5 class="text-info">${result["Date"].slice(0, 10)}</h5>
+        <h6 class="text-dark">Confirmed: ${result["Confirmed"]}</h6>
+        <h6 class="text-dark">Active: ${result["Active"]}</h6>
+        <h6 class="text-dark">Deaths: ${result["Deaths"]}</h6>
+        <h6 class="text-dark">Recovered: ${result["Recovered"]}</h6>
+      `);
+    },
+
+    error: (xhr) => {
+      console.log(xhr["responseText"]);
+    },
+  });
+}
+//=============================ADD MOVIES INFO=============================//
+function getMoviesInfo(isoCode) {
+  $("#movies").html("");
+  $.ajax({
+    url: "source/php/getMoviesInfo.php",
+    type: `GET`,
+    dataType: `json`,
+    data: {
+      isoCode: isoCode,
+    },
+    success: (result) => {
+      try {
+        for (let val of result) {
+          $("#movies").append(`
+            <a href=${
+              val["info"]
+            } target="_blank"><img width='100' height='100' src="${
+            val["image"]
+              ? val["image"]
+              : "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/488px-No-Image-Placeholder.svg.png"
+          }" class="img-fluid img-thumbnail" alt="Movies Image"></a>
+            <h5 class="text-dark">${val["name"]} | Genre: ${
+            val["genre"] ? val["genre"] : "N/A"
+          } | SE: ${val["seasons"]} | Status: ${val["status"]}</h5>
+          `);
+        }
+      } catch (e) {
+        $("#movies").html(
+          `We could not find any movies data for this country, please check the country Internet censorship rules and regulation`
+        );
+        console.log(`No Movies Data:\n${e}`);
+      }
     },
 
     error: (xhr) => {
@@ -244,7 +323,7 @@ function addIcon(coords, html, type) {
 }
 //=============================Display Info=============================//
 function displayInfo(country, iso) {
-  // make call to getInfo php
+  $("#news").html("");
   $.ajax({
     url: "source/php/getInfo.php",
     type: `GET`,
@@ -264,7 +343,7 @@ function displayInfo(country, iso) {
       // get DOM elements to update
       $("#about").html(
         `
-          <img src="${flag}" class="img-fluid img-thumbnail" alt="Responsive image">
+          <img src="${flag}" class="img-fluid img-thumbnail" alt="Country Image">
           <h5 class="text-info">${country}</h5>
           <h6 class="text-info">${capital}</h6>
           <h6 class="text-dark">Language: ${language}</h6>
@@ -296,21 +375,22 @@ function displayInfo(country, iso) {
           <h6>Wind Speed: ${wind}knots</h6>
         `
       );
-      if (result["news"]) {
+      try {
         result["news"].forEach((el) => {
           $("#news").append(
             `
-                <img src="${
-                  el["image"] ? el["image"] : ""
-                }" class="img-fluid img-thumbnail" alt="Responsive image">
-                <h5 class="text-info">${el["title"]}</h5>
-                <p>${el["description"]}</p>
-                <a href=${el["url"]} target="_blank">Find out more<a>
-            `
+                  <img src="${
+                    el["image"] ? el["image"] : ""
+                  }" class="img-fluid img-thumbnail" alt="News Image">
+                  <h5 class="text-info">${el["title"]}</h5>
+                  <p>${el["description"]}</p>
+                  <a href=${el["url"]} target="_blank">Find out more<a>
+              `
           );
         });
-      } else {
+      } catch (e) {
         $("#news").html("No news for this country");
+        console.log(`No News Data:\n${e}`);
       }
     },
 

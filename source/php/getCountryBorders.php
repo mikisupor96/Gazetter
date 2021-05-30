@@ -1,5 +1,5 @@
 <?php
-	$url = file_get_contents('http://localhost/source/json/countryBorders.geo.json');
+	$url = file_get_contents('http://localhost:100/source/json/countryBorders.geo.json');
 	$countryCode = $_REQUEST["countryCode"];
 	$decode = json_decode($url, true);
 
